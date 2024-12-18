@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TicketQueueSimulation {
 
-    static class TicketMachine {
+    public static class TicketMachine {
         private final int MAX_TICKET;
         private final AtomicInteger currentTicket;
 
@@ -22,7 +22,7 @@ public class TicketQueueSimulation {
         }
     }
 
-    static class ServiceDisplay {
+    public static class ServiceDisplay {
         private final int MAX_TICKET;
         private final AtomicInteger currentDisplay;
 
@@ -40,7 +40,7 @@ public class TicketQueueSimulation {
         }
     }
 
-    static class Customer implements Runnable {
+    public static class Customer implements Runnable {
         private final TicketMachine ticketMachine;
         private final ServiceDisplay serviceDisplay;
         private final AtomicInteger servedCustomers;
@@ -84,24 +84,22 @@ public class TicketQueueSimulation {
         }
     }
 
-    public static void main(String[] args) {
-        final int MAX_TICKETS = 10;
-        final int TOTAL_CUSTOMERS = 15;
-
-        TicketMachine ticketMachine = new TicketMachine(MAX_TICKETS);
-        ServiceDisplay serviceDisplay = new ServiceDisplay(MAX_TICKETS);
+    // Добавляем метод для удобства тестирования
+    public static int runSimulation(int maxTickets, int totalCustomers, int poolSize) {
+        TicketMachine ticketMachine = new TicketMachine(maxTickets);
+        ServiceDisplay serviceDisplay = new ServiceDisplay(maxTickets);
         AtomicInteger servedCustomers = new AtomicInteger(0);
 
-        ExecutorService executor = Executors.newFixedThreadPool(5);
+        ExecutorService executor = Executors.newFixedThreadPool(poolSize);
 
-        for (int i = 0; i < TOTAL_CUSTOMERS; i++) {
-            executor.execute(new Customer(ticketMachine, serviceDisplay, servedCustomers, TOTAL_CUSTOMERS));
+        for (int i = 0; i < totalCustomers; i++) {
+            executor.execute(new Customer(ticketMachine, serviceDisplay, servedCustomers, totalCustomers));
         }
 
         executor.shutdown();
         try {
             while (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-                if (servedCustomers.get() == TOTAL_CUSTOMERS) {
+                if (servedCustomers.get() == totalCustomers) {
                     break;
                 }
             }
@@ -110,6 +108,11 @@ public class TicketQueueSimulation {
         }
 
         System.out.println("All customers have been served.");
+        return servedCustomers.get();
+    }
+
+    public static void main(String[] args) {
+        int served = runSimulation(10, 15, 5);
+        System.out.println("Served: " + served);
     }
 }
-
